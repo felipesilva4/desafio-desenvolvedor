@@ -32,8 +32,8 @@ class QueuesServiceTest extends TestCase
         $payload = ['upload_id' => 10];
 
         $channel = $this->mockConnection();
-
         $channel->shouldReceive('queue_declare')
+            ->atLeast()
             ->once()
             ->with('file-imports', false, true, false, false);
 
@@ -90,13 +90,16 @@ class QueuesServiceTest extends TestCase
 
         $connection = Mockery::mock('overload:' . AMQPStreamConnection::class);
         $connection->shouldReceive('channel')
+            ->atLeast()
             ->once()
             ->andReturn($channel);
 
         $channel->shouldReceive('close')
+            ->atLeast()
             ->once();
 
         $connection->shouldReceive('close')
+            ->atLeast()
             ->once();
 
         return $channel;

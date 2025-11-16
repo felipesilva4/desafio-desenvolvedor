@@ -2,15 +2,13 @@
 
 namespace Tests\Unit\Console;
 
-use App\Repositories\MongoUploadRepositoryInterface;
+use App\Repositories\MongoRepositoryInterface;
 use App\Services\Contracts\ImportServiceInterface;
 use Exception;
 use Illuminate\Console\Command;
 use Mockery;
 use Mockery\MockInterface;
-use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-use PhpAmqpLib\Message\AMQPMessage;
+use App\Services\Contracts\QueuesServiceInterface;
 use Tests\TestCase;
 
 class FileImportWorkerCommandTest extends TestCase
@@ -26,21 +24,14 @@ class FileImportWorkerCommandTest extends TestCase
         $this->fakeRabbitConfig();
 
         $importService = Mockery::mock(ImportServiceInterface::class);
-        $mongoRepository = Mockery::mock(MongoUploadRepositoryInterface::class);
+        $mongoRepository = Mockery::mock(MongoRepositoryInterface::class);
 
-        $channel = $this->mockConnection();
-
-        $channel->shouldReceive('queue_declare')
+        $queues = Mockery::mock(QueuesServiceInterface::class);
+        $queues->shouldReceive('declareQueue')->once()->with('file-imports');
+        $queues->shouldReceive('consumeOne')
             ->once()
-            ->with('file-imports', false, true, false, false);
-
-        $message = new AMQPMessage(json_encode(['upload_id' => 42]));
-        $message->delivery_info = ['delivery_tag' => 'tag-123'];
-
-        $channel->shouldReceive('basic_get')
-            ->once()
-            ->with('file-imports', false)
-            ->andReturn($message);
+            ->with('file-imports')
+            ->andReturn(['payload' => ['upload_id' => 42], 'deliveryTag' => 'tag-123']);
 
         $documents = [['foo' => 'bar']];
 
@@ -55,11 +46,9 @@ class FileImportWorkerCommandTest extends TestCase
             ->once()
             ->with($documents);
 
-        $channel->shouldReceive('basic_ack')
-            ->once()
-            ->with('tag-123');
+        $queues->shouldReceive('ack')->once()->with('tag-123');
 
-        $this->bindCommandDependencies($importService, $mongoRepository);
+        $this->bindCommandDependencies($importService, $mongoRepository, $queues);
 
         $this->artisan('file-imports:consume')
             ->assertExitCode(Command::SUCCESS);
@@ -70,30 +59,20 @@ class FileImportWorkerCommandTest extends TestCase
         $this->fakeRabbitConfig();
 
         $importService = Mockery::mock(ImportServiceInterface::class);
-        $mongoRepository = Mockery::mock(MongoUploadRepositoryInterface::class);
+        $mongoRepository = Mockery::mock(MongoRepositoryInterface::class);
 
-        $channel = $this->mockConnection();
-
-        $channel->shouldReceive('queue_declare')
+        $queues = Mockery::mock(QueuesServiceInterface::class);
+        $queues->shouldReceive('declareQueue')->once()->with('file-imports');
+        $queues->shouldReceive('consumeOne')
             ->once()
-            ->with('file-imports', false, true, false, false);
-
-        $message = new AMQPMessage(json_encode(['invalid' => true]));
-        $message->delivery_info = ['delivery_tag' => 'tag-456'];
-
-        $channel->shouldReceive('basic_get')
-            ->once()
-            ->with('file-imports', false)
-            ->andReturn($message);
-
-        $channel->shouldReceive('basic_reject')
-            ->once()
-            ->with('tag-456', false);
+            ->with('file-imports')
+            ->andReturn(['payload' => ['invalid' => true], 'deliveryTag' => 'tag-456']);
+        $queues->shouldReceive('reject')->once()->with('tag-456', false);
 
         $importService->shouldNotReceive('handle');
         $mongoRepository->shouldNotReceive('insertMany');
 
-        $this->bindCommandDependencies($importService, $mongoRepository);
+        $this->bindCommandDependencies($importService, $mongoRepository, $queues);
 
         $this->artisan('file-imports:consume')
             ->assertExitCode(Command::SUCCESS);
@@ -104,21 +83,14 @@ class FileImportWorkerCommandTest extends TestCase
         $this->fakeRabbitConfig();
 
         $importService = Mockery::mock(ImportServiceInterface::class);
-        $mongoRepository = Mockery::mock(MongoUploadRepositoryInterface::class);
+        $mongoRepository = Mockery::mock(MongoRepositoryInterface::class);
 
-        $channel = $this->mockConnection();
-
-        $channel->shouldReceive('queue_declare')
+        $queues = Mockery::mock(QueuesServiceInterface::class);
+        $queues->shouldReceive('declareQueue')->once()->with('file-imports');
+        $queues->shouldReceive('consumeOne')
             ->once()
-            ->with('file-imports', false, true, false, false);
-
-        $message = new AMQPMessage(json_encode(['upload_id' => 99]));
-        $message->delivery_info = ['delivery_tag' => 'tag-789'];
-
-        $channel->shouldReceive('basic_get')
-            ->once()
-            ->with('file-imports', false)
-            ->andReturn($message);
+            ->with('file-imports')
+            ->andReturn(['payload' => ['upload_id' => 99], 'deliveryTag' => 'tag-789']);
 
         $importService
             ->shouldReceive('handle')
@@ -128,40 +100,22 @@ class FileImportWorkerCommandTest extends TestCase
 
         $mongoRepository->shouldNotReceive('insertMany');
 
-        $channel->shouldReceive('basic_reject')
-            ->once()
-            ->with('tag-789', true);
+        $queues->shouldReceive('reject')->once()->with('tag-789', true);
 
-        $this->bindCommandDependencies($importService, $mongoRepository);
+        $this->bindCommandDependencies($importService, $mongoRepository, $queues);
 
         $this->artisan('file-imports:consume')
             ->assertExitCode(Command::FAILURE);
     }
 
-    private function mockConnection(): AMQPChannel|MockInterface
-    {
-        $channel = Mockery::mock(AMQPChannel::class);
-
-        $connection = Mockery::mock('overload:' . AMQPStreamConnection::class);
-        $connection->shouldReceive('channel')
-            ->once()
-            ->andReturn($channel);
-
-        $connection->shouldReceive('close')
-            ->once();
-
-        $channel->shouldReceive('close')
-            ->once();
-
-        return $channel;
-    }
-
     private function bindCommandDependencies(
         ImportServiceInterface|MockInterface $importService,
-        MongoUploadRepositoryInterface|MockInterface $mongoRepository,
+        MongoRepositoryInterface|MockInterface $mongoRepository,
+        QueuesServiceInterface|MockInterface $queues,
     ): void {
         $this->app->instance(ImportServiceInterface::class, $importService);
-        $this->app->instance(MongoUploadRepositoryInterface::class, $mongoRepository);
+        $this->app->instance(MongoRepositoryInterface::class, $mongoRepository);
+        $this->app->instance(QueuesServiceInterface::class, $queues);
     }
 
     private function fakeRabbitConfig(): void

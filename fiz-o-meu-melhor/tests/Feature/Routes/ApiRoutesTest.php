@@ -36,13 +36,23 @@ class ApiRoutesTest extends TestCase
         $response->assertStatus(401);
     }
 
+    public function testDataRouteRequiresAuthentication(): void
+    {
+        $response = $this->getJson("/api/data?TckrSymb=PETR4&RptDt=2024-01-01");
+
+        $response->assertStatus(401);
+    }
+
     public function testRoutesHaveCorrectNames(): void
     {
         $uploadRoute = route('uploads.upload', [], false);
         $historyRoute = route('uploads.history', [], false);
+        $dataRoute = route('data.search', [], false);
 
         $this->assertIsString($uploadRoute);
         $this->assertIsString($historyRoute);
+        $this->assertIsString($dataRoute);
+        $this->assertTrue(str_contains($dataRoute, '/api/data'));
     }
 
     public function testShowRouteHasModelBinding(): void

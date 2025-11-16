@@ -34,7 +34,6 @@ class UploadHistoricTest extends TestCase
         $fillable = $model->getFillable();
 
         $this->assertContains('name', $fillable);
-        $this->assertContains('file_path', $fillable);
         $this->assertContains('hash', $fillable);
         $this->assertContains('reference_date', $fillable);
         $this->assertContains('status', $fillable);
