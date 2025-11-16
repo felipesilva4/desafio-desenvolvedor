@@ -15,6 +15,16 @@ services:
       - redis
     networks:
       - app-network
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: "pgsql"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_DATABASE: "appdb"
+      DB_USERNAME: "root"
+      DB_PASSWORD: "root"
+
 
   nginx:
     image: nginx:1.27-alpine
