@@ -5,26 +5,14 @@ namespace Tests\Feature\Services;
 use App\Models\UploadHistoric;
 use App\Services\Contracts\QueuesServiceInterface;
 use App\Services\FileImportService;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Mockery;
 use Tests\TestCase;
 
 class FileImportServiceTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        Artisan::call('migrate', ['--force' => true]);
-        DB::beginTransaction();
-    }
-
-    protected function tearDown(): void
-    {
-        DB::rollBack();
-        parent::tearDown();
-    }
+    use RefreshDatabase;
 
     public function testItPersistsUploadAndDispatchesQueue(): void
     {

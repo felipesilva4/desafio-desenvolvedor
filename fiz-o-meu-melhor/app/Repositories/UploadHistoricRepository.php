@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\UploadHistoric;
+use Illuminate\Database\Eloquent\Collection;
 
 class UploadHistoricRepository implements UploadHistoricRepositoryInterface
 {
@@ -24,6 +25,11 @@ class UploadHistoricRepository implements UploadHistoricRepositoryInterface
     public function updateStatusById(int $id, string $status): void
     {
         UploadHistoric::where('id', $id)->update(['status' => $status]);
+    }
+
+    public function getUploadHistoric(): ?Collection
+    {
+        return UploadHistoric::all();
     }
 }
 

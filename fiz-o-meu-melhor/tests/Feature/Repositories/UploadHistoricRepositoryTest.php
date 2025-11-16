@@ -4,22 +4,12 @@ namespace Tests\Feature\Repositories;
 
 use App\Models\UploadHistoric;
 use App\Repositories\UploadHistoricRepository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class UploadHistoricRepositoryTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        DB::beginTransaction();
-    }
-
-    protected function tearDown(): void
-    {
-        DB::rollBack();
-        parent::tearDown();
-    }
+    use RefreshDatabase;
 
     public function testItInteractsWithDatabase(): void
     {
@@ -27,7 +17,6 @@ class UploadHistoricRepositoryTest extends TestCase
 
         $upload = $repository->create([
             'name' => 'file.csv',
-            'file_path' => base64_encode('content'),
             'hash' => 'hash-123',
             'reference_date' => now()->toDateString(),
             'status' => UploadHistoric::STATUS_WAITING,

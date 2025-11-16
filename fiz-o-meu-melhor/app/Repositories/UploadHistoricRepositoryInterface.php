@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\UploadHistoric;
+use Illuminate\Database\Eloquent\Collection;
 
 interface UploadHistoricRepositoryInterface
 {
@@ -13,5 +14,7 @@ interface UploadHistoricRepositoryInterface
     public function findById(int $id): ?UploadHistoric;
 
     public function updateStatusById(int $id, string $status): void;
+
+    public function getUploadHistoric(): ?Collection;
 }
 

@@ -8,5 +8,7 @@ use Illuminate\Http\UploadedFile;
 interface FileImportServiceInterface
 {
     public function handleUpload(UploadedFile $file): UploadHistoric;
+
+    public function getUploadDataHistoric(): array;
 }
 

@@ -73,5 +73,12 @@ class FileImportService implements FileImportServiceInterface
             throw $exception;
         }
     }
+
+    public function getUploadDataHistoric(): array
+    {
+        $uploadHistoric = $this->uploadHistoricRepository->getUploadHistoric();
+        
+        return $uploadHistoric->toArray();
+    }
 }
 

@@ -43,17 +43,11 @@ class FileImportController extends Controller
     /**
      * Histórico de uploads.
      */
-    public function history(): Response
+    public function history(): JsonResponse
     {
-        return response()->noContent(Response::HTTP_NOT_IMPLEMENTED);
-    }
+        $uploadHistoric = $this->fileImportService->getUploadDataHistoric();
 
-    /**
-     * Buscar conteúdo do arquivo.
-     */
-    public function show(UploadHistoric $uploadHistoric): Response
-    {
-        return response()->noContent(Response::HTTP_NOT_IMPLEMENTED);
+        return response()->json($uploadHistoric);
     }
 }
 

@@ -4,24 +4,19 @@ namespace Tests\Unit\Repositories;
 
 use App\Models\UploadHistoric;
 use App\Repositories\UploadHistoricRepository;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class UploadHistoricRepositoryTest extends TestCase
 {
+    use RefreshDatabase;
+
     private UploadHistoricRepository $repository;
 
     protected function setUp(): void
     {
         parent::setUp();
-        DB::beginTransaction();
         $this->repository = new UploadHistoricRepository();
-    }
-
-    protected function tearDown(): void
-    {
-        DB::rollBack();
-        parent::tearDown();
     }
 
     public function testItChecksIfHashExists(): void
@@ -36,7 +31,6 @@ class UploadHistoricRepositoryTest extends TestCase
     {
         $data = UploadHistoric::factory()->make()->only([
             'name',
-            'file_path',
             'hash',
             'reference_date',
             'status',
@@ -59,6 +53,15 @@ class UploadHistoricRepositoryTest extends TestCase
         $this->assertNotNull($found);
         $this->assertSame($upload->id, $found->id);
         $this->assertNull($this->repository->findById(999999));
+    }
+
+    public function testShouldReturnUploadHistoric(): void
+    {
+        UploadHistoric::factory()->count(3)->create();
+        $uploads = $this->repository->getUploadHistoric();
+
+        $this->assertCount(3, $uploads);
+        $this->assertInstanceOf(UploadHistoric::class, $uploads->first());
     }
 }
 

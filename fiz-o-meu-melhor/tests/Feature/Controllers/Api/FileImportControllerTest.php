@@ -5,27 +5,28 @@ namespace Tests\Feature\Controllers\Api;
 use App\Exceptions\FileAlreadyImportedException;
 use App\Models\UploadHistoric;
 use App\Services\Contracts\FileImportServiceInterface;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\DB;
 use Mockery;
 use Mockery\MockInterface;
+use PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate;
 use Tests\TestCase;
 
 class FileImportControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected function setUp(): void
     {
         parent::setUp();
-        // Disable JWT middleware for these tests
-        $this->withoutMiddleware(\PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class);
-        DB::beginTransaction();
+        // tira o middleware JWT para testar rotas
+        $this->withoutMiddleware(Authenticate::class);
     }
 
     protected function tearDown(): void
     {
         Mockery::close();
-        DB::rollBack();
         parent::tearDown();
     }
 
@@ -90,21 +91,5 @@ class FileImportControllerTest extends TestCase
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonValidationErrors(['file']);
-    }
-
-    public function testHistoryReturnsNotImplemented(): void
-    {
-        $response = $this->getJson('/api/uploads');
-
-        $response->assertStatus(Response::HTTP_NOT_IMPLEMENTED);
-    }
-
-    public function testShowReturnsNotImplemented(): void
-    {
-        $upload = UploadHistoric::factory()->create();
-
-        $response = $this->getJson("/api/uploads/{$upload->id}");
-
-        $response->assertStatus(Response::HTTP_NOT_IMPLEMENTED);
     }
 }

@@ -4,26 +4,18 @@ namespace Tests\Feature\Routes;
 
 use App\Models\UploadHistoric;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Illuminate\Http\UploadedFile;
 
 class ApiRoutesTest extends TestCase
 {
-    protected function setUp(): void
-    {
-        parent::setUp();
-        DB::beginTransaction();
-    }
+    use RefreshDatabase;
 
-    protected function tearDown(): void
-    {
-        DB::rollBack();
-        parent::tearDown();
-    }
     public function testUploadRouteRequiresAuthentication(): void
     {
-        $file = \Illuminate\Http\UploadedFile::fake()->create('test.csv', 100);
+        $file = UploadedFile::fake()->create('test.csv', 100);
 
         $response = $this->postJson('/api/uploads', [
             'file' => $file,
@@ -71,7 +63,6 @@ class ApiRoutesTest extends TestCase
     {
         $upload = UploadHistoric::factory()->create();
 
-        // Testa se a rota aceita o parâmetro do model
         $route = route('uploads.show', ['uploadHistoric' => $upload->id]);
         $this->assertTrue(str_contains($route, '/api/uploads/'));
     }
