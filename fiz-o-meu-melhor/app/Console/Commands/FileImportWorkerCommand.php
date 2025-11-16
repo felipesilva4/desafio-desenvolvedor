@@ -3,9 +3,11 @@
 namespace App\Console\Commands;
 
 use App\Repositories\MongoRepositoryInterface;
+use App\Repositories\UploadHistoricRepositoryInterface;
 use App\Services\Contracts\ImportServiceInterface;
 use App\Services\Contracts\QueuesServiceInterface;
 use Illuminate\Console\Command;
+use App\Models\UploadHistoric;
 use Throwable;
 
 class FileImportWorkerCommand extends Command
@@ -18,6 +20,7 @@ class FileImportWorkerCommand extends Command
         private readonly ImportServiceInterface $importService,
         private readonly MongoRepositoryInterface $mongoRepository,
         private readonly QueuesServiceInterface $queues,
+        private readonly UploadHistoricRepositoryInterface $uploadHistoricRepository
     ) {
         parent::__construct();
     }
@@ -27,6 +30,7 @@ class FileImportWorkerCommand extends Command
         $queue = (string) data_get(config('services.rabbitmq'), 'queue', 'file-imports');
         $this->queues->declareQueue($queue);
 
+        $uploadId = null;
         try {
             $consumed = $this->queues->consumeOne($queue);
 
@@ -42,6 +46,7 @@ class FileImportWorkerCommand extends Command
 
                 $uploadId = (int) $payload['upload_id'];
                 $this->info("Processando upload {$uploadId}...");
+                $this->uploadHistoricRepository->updateStatusById($uploadId, UploadHistoric::STATUS_PROCESSING);
 
                 try {
                     $documents = $this->importService->handle($uploadId);
@@ -51,9 +56,10 @@ class FileImportWorkerCommand extends Command
                     } else {
                         $this->info('Nenhum documento gerado para este upload.');
                     }
-
+                    $this->uploadHistoricRepository->updateStatusById($uploadId, UploadHistoric::STATUS_PROCESSED);
                     if (is_string($deliveryTag)) $this->queues->ack($deliveryTag);
                 } catch (Throwable $exception) {
+                    $this->uploadHistoricRepository->updateStatusById($uploadId, UploadHistoric::STATUS_ERROR);
                     $this->error($exception->getMessage());
                     if (is_string($deliveryTag)) $this->queues->reject($deliveryTag, true);
                     return self::FAILURE;

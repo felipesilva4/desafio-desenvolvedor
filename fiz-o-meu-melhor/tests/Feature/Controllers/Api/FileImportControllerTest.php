@@ -7,6 +7,7 @@ use App\Models\UploadHistoric;
 use App\Services\Contracts\FileImportServiceInterface;
 use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -18,11 +19,13 @@ class FileImportControllerTest extends TestCase
         parent::setUp();
         // Disable JWT middleware for these tests
         $this->withoutMiddleware(\PHPOpenSourceSaver\JWTAuth\Http\Middleware\Authenticate::class);
+        DB::beginTransaction();
     }
 
     protected function tearDown(): void
     {
         Mockery::close();
+        DB::rollBack();
         parent::tearDown();
     }
 

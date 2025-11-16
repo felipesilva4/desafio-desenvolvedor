@@ -20,5 +20,10 @@ class UploadHistoricRepository implements UploadHistoricRepositoryInterface
     {
         return UploadHistoric::find($id);
     }
+
+    public function updateStatusById(int $id, string $status): void
+    {
+        UploadHistoric::where('id', $id)->update(['status' => $status]);
+    }
 }
 

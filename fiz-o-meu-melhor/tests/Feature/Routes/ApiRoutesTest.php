@@ -5,10 +5,22 @@ namespace Tests\Feature\Routes;
 use App\Models\UploadHistoric;
 use App\Models\User;
 use PHPOpenSourceSaver\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ApiRoutesTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        DB::beginTransaction();
+    }
+
+    protected function tearDown(): void
+    {
+        DB::rollBack();
+        parent::tearDown();
+    }
     public function testUploadRouteRequiresAuthentication(): void
     {
         $file = \Illuminate\Http\UploadedFile::fake()->create('test.csv', 100);
