@@ -31,15 +31,6 @@ class ApiRoutesTest extends TestCase
         $response->assertStatus(401);
     }
 
-    public function testShowRouteRequiresAuthentication(): void
-    {
-        $upload = UploadHistoric::factory()->create();
-
-        $response = $this->getJson("/api/uploads/{$upload->id}");
-
-        $response->assertStatus(401);
-    }
-
     public function testDataRouteRequiresAuthentication(): void
     {
         $response = $this->getJson("/api/data?TckrSymb=PETR4&RptDt=2024-01-01");
@@ -57,14 +48,6 @@ class ApiRoutesTest extends TestCase
         $this->assertIsString($historyRoute);
         $this->assertIsString($dataRoute);
         $this->assertTrue(str_contains($dataRoute, '/api/data'));
-    }
-
-    public function testShowRouteHasModelBinding(): void
-    {
-        $upload = UploadHistoric::factory()->create();
-
-        $route = route('uploads.show', ['uploadHistoric' => $upload->id]);
-        $this->assertTrue(str_contains($route, '/api/uploads/'));
     }
 
     protected function authenticateUser(): User

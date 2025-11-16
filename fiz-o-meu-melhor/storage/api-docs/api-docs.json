@@ -1,0 +1,292 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "File Import API",
+        "description": "API para importação e gerenciamento de arquivos CSV/Excel",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8080/api",
+            "description": "API Server"
+        },
+        {
+            "url": "http://localhost:8080"
+        }
+    ],
+    "paths": {
+        "/uploads": {
+            "get": {
+                "tags": [
+                    "Uploads"
+                ],
+                "summary": "Listar histórico de uploads",
+                "description": "Retorna a lista de todos os uploads realizados",
+                "operationId": "7ff0d69af2e28d1ba260e2c1d5773b52",
+                "responses": {
+                    "200": {
+                        "description": "Lista de uploads",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "data.csv"
+                                            },
+                                            "hash": {
+                                                "type": "string",
+                                                "example": "abc123"
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "example": "PROCESSED"
+                                            },
+                                            "reference_date": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2024-01-01"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Uploads"
+                ],
+                "summary": "Upload de arquivo CSV/Excel",
+                "description": "Envia um arquivo CSV ou Excel para importação. O arquivo é validado e processado em background.",
+                "operationId": "f994f8e679b1f9bf024b013caafb864e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "description": "Arquivo CSV ou Excel (.csv, .xls, .xlsx)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Arquivo enviado com sucesso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "data.csv"
+                                        },
+                                        "hash": {
+                                            "type": "string",
+                                            "example": "abc123def456"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "WAITING"
+                                        },
+                                        "reference_date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2024-01-01"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "409": {
+                        "description": "Arquivo já foi importado anteriormente"
+                    },
+                    "422": {
+                        "description": "Erro de validação"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/data": {
+            "get": {
+                "tags": [
+                    "Data"
+                ],
+                "summary": "Buscar dados importados",
+                "description": "Busca dados importados do MongoDB filtrando por TckrSymb (ticker) e RptDt (data do relatório). Retorna apenas os campos essenciais.",
+                "operationId": "65dc4522b2660b38ff585d3bcbce28cf",
+                "parameters": [
+                    {
+                        "name": "TckrSymb",
+                        "in": "query",
+                        "description": "Símbolo do ticker (ex: PETR4, AMZO34)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "PETR4"
+                        }
+                    },
+                    {
+                        "name": "RptDt",
+                        "in": "query",
+                        "description": "Data do relatório no formato YYYY-MM-DD",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2024-01-01"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número da página (padrão: 1)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Itens por página (padrão: 50, máximo: 500)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "maximum": 500,
+                            "minimum": 1,
+                            "example": 50
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de dados encontrados",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "RptDt": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2024-08-22"
+                                            },
+                                            "TckrSymb": {
+                                                "type": "string",
+                                                "example": "AMZO34"
+                                            },
+                                            "MktNm": {
+                                                "type": "string",
+                                                "example": "EQUITY-CASH"
+                                            },
+                                            "SctyCtgyNm": {
+                                                "type": "string",
+                                                "example": "BDR"
+                                            },
+                                            "ISIN": {
+                                                "type": "string",
+                                                "example": "BRAMZOBDR002"
+                                            },
+                                            "CrpnNm": {
+                                                "type": "string",
+                                                "example": "AMAZON.COM, INC"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                },
+                                "example": [
+                                    {
+                                        "RptDt": "2024-08-22",
+                                        "TckrSymb": "AMZO34",
+                                        "MktNm": "EQUITY-CASH",
+                                        "SctyCtgyNm": "BDR",
+                                        "ISIN": "BRAMZOBDR002",
+                                        "CrpnNm": "AMAZON.COM, INC"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Não autenticado"
+                    },
+                    "422": {
+                        "description": "Erro de validação - TckrSymb e RptDt são obrigatórios"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "name": "Authorization",
+                "in": "header",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Uploads",
+            "description": "Endpoints para gerenciamento de uploads de arquivos"
+        },
+        {
+            "name": "Data",
+            "description": "Endpoints para busca de dados importados"
+        }
+    ]
+}

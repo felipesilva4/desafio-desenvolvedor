@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('jwt.auth')->prefix('uploads')->group(function () {
     Route::post('/', [FileImportController::class, 'upload'])->name('uploads.upload');
     Route::get('/', [FileImportController::class, 'history'])->name('uploads.history');
-    Route::get('/{uploadHistoric}', [FileImportController::class, 'show'])->name('uploads.show');
 });
 
 Route::middleware('jwt.auth')->get('/data', [SearchImportedDataController::class, 'getData'])->name('data.search');
