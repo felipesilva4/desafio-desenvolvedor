@@ -23,10 +23,14 @@ Sistema desenvolvido em Laravel para importação e processamento de arquivos CS
 ## 🚀 Início Rápido
 
 Para rodar a aplicação, use o script `start.sh` (presumindo que você está usando Linux):
+
 Se estiver usando windows, não sei o que fazer haha (Sério nunca usei com docker)
+
 Se estiver MAC piorou pois sou pobre!
 
+
 ```bash
+cd fiz-o-meu-melhor
 bash start.sh
 ```
 
